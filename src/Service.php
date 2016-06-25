@@ -1,6 +1,6 @@
 <?php
 
-namespace QiniuHelper;
+namespace Cloudsthere\QiniuHelper;
 
 class Service
 {

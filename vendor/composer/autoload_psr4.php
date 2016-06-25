@@ -7,5 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Qiniu\\' => array($vendorDir . '/qiniu/php-sdk/src/Qiniu'),
-    'QiniuHelper\\' => array($baseDir . '/src'),
+    'Cloudsthere\\QiniuHelper\\' => array($baseDir . '/src'),
 );
