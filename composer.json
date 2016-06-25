@@ -1,0 +1,17 @@
+{
+    "name": "cloudsthere/qiniu-helper",
+    "authors": [
+        {
+            "name": "liang",
+            "email": "cloudsthere@163.com"
+        }
+    ],
+    "require": {
+        "qiniu/php-sdk": "^7.0"
+    },
+    "autoload":{
+        "psr-4":{
+            "QiniuHelper\\" :"src/"
+        }
+    }
+}
