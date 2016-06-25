@@ -6,6 +6,7 @@
             "email": "cloudsthere@163.com"
         }
     ],
+    "license": "MIT",
     "require": {
         "qiniu/php-sdk": "^7.0"
     },
