@@ -1,6 +1,6 @@
 # qiniu-helper
 
-七牛非官方SDK，基于官方SDK[qiniu/php-sdk], 适用Laravel, 包含基本操作功能，以及新增功能：
+七牛非官方SDK，基于官方SDK[[qiniu/php-sdk]](https://github.com/qiniu/php-sdk), 适用Laravel, 包含基本操作功能，以及新增功能：
 
 * 刷新缓存
 * 同步目录
