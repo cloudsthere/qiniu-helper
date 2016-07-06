@@ -11,8 +11,9 @@
         "qiniu/php-sdk": "^7.0"
     },
     "autoload":{
+        "files": ["src/functions.php"],
         "psr-4":{
-            "Cloudsthere\\QiniuHelper\\" :"src/"
+            "QiniuHelper\\" :"src/"
         }
     }
 }
