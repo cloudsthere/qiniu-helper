@@ -139,6 +139,7 @@ $qiniu->batch($ops = []); // 执行指令
 
 ```
 // 刷新七牛缓存, 七牛限制每天刷新文件数为100个
+// 关于第二个参数$dirs, 七牛虽然开放了刷新目录这个接口，但刷新目录的权限没有对外开放（客服说的），所以不建议使用
 $qiniu->refresh($keys = [], $dirs = []);
 
 // 向上同步
@@ -163,7 +164,7 @@ $qiniu->downSync($dest, $prefix = '', $level = 1)
 
 * 持久化操作执行完后，七牛会向指定的notify_url(位于配置文件), 发送执行结果通知
 * 具体操作命令可参考[七牛API数据处理](http://developer.qiniu.com/article/index.html#dora-api-handbook)
-* TODO saveAs
+
 
 ```
 // $key, 将要操作的资源；$fops，stirng|array, 将要进行的操作;$force, 是否覆盖已有相同文件
@@ -189,6 +190,9 @@ $qiniu->imageExif($key);
 $qiniu->imagePreviewUrl($key, $ops = []);
 ```
 ### 回调
+* 七牛的回调有两种，用于上传策略的`callback`, 用于持久化操作的`notify`。本SDK都用`QiniuHelper\Callback`类处理。
+* `Callback`类的`verify`方法只对`callback`有效。因为notify请求头没有`HTTP_AUTHORIZATION` (可能七牛认为notify不需要验证吧)
+* `notify_url`在配置中设定，每次持久化操作都会发送回调（当然，你可以删除此配置，取消回调通知）。`callbackUrl`需要在上传策略中手动设定。
 
 ```
 // 获取Callback对象

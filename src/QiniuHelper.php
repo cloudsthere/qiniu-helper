@@ -566,7 +566,12 @@ class QiniuHelper extends Container {
 		$stat = [];
 		$filesys = $this->getFilesystem();
 
-		$local_files = (array) $filesys->allFiles($dest);
+		if($filesys->isDirectory($dest))
+			$local_files = (array) $filesys->allFiles($dest);
+		else{
+			$local_files = [];
+			$filesys->makeDirectory($dest);
+		}
 
 		if (!empty($local_files)) {
 
