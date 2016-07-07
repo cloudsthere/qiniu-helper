@@ -11,7 +11,7 @@ return [
         'space' => 'o9is2ohd6.bkt.clouddn.com'
     ],
 
-
+    // 使用持久化操作时，七牛会将执行通知发送到notify_url
     'notify_url' => 'http://apt.niowoo.com/notify',
 
     // 是否使用laravel的缓存

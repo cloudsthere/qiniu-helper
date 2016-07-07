@@ -8,7 +8,7 @@ class Callback
 {
     const API = 'http://172.30.251.210/callback.php';
     private $auth;
-    private $contentType = 'application/x-www-form-urlencoded'; 
+    private $contentType; 
     private $body;
     private $authorization;
 
@@ -18,6 +18,9 @@ class Callback
 
         if(isset($_SERVER['HTTP_AUTHORIZATION']))
             $this->authorization = $_SERVER['HTTP_AUTHORIZATION'];
+
+        if(isset($_SERVER['CONTENT_TYPE']))
+            $this->contentType = $_SERVER['CONTENT_TYPE'];
 
     }
 
@@ -38,17 +41,21 @@ class Callback
     }
 
     public function read(){
-        $pairs = explode('&', $this->body);
-        $params = [];
-        foreach($pairs as $pair){
-            list($key, $value) = explode('=', $pair);
-            $param[$key] = $value;
+        if($this->contentType == 'application/x-www-form-urlencoded'){
+            $pairs = explode('&', $this->body);
+            $params = [];
+            foreach($pairs as $pair){
+                list($key, $value) = explode('=', $pair);
+                $params[$key] = $value;
+            }
+        }elseif($this->contentType == 'application/json'){
+            $params = json_decode($this->body, true);
         }
         return $params;
     }
 
     public function getBody(){
-        return $this->body();
+        return $this->body;
     }
 
     public function getContentType(){

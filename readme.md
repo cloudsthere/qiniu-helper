@@ -16,20 +16,21 @@ composer require "cloudthere/qiniu-helper"
 
 ### Laravel 应用
 
-1. 注册`ServiceProvider`:
+1.注册`ServiceProvider`
 
 ```
 // 在根目录下config/app.php中添加
 QiniuHelper\ServiceProvider::class,
 ```
 
-2.  创建配置文件
+2.创建配置文件
 
 ```
 php artisan vendor:publish
 ```
 
-3.  修改根目录下`config/qiniu.php`中相关配置
+3.修改根目录下`config/qiniu.php`中相关配置
+
 
 ### 其他应用
 

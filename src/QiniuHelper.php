@@ -4,16 +4,20 @@ namespace QiniuHelper;
 
 use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\FilesystemCache;
+use Illuminate\Filesystem\Filesystem;
 use Pimple\Container;
 use Qiniu\Processing\PersistentFop;
 
 class QiniuHelper extends Container {
 	const CACHE_EXPIRE = 3600;
 	const CACHE_PREFIX = 'QiniuHelper.uploadToken.';
+	const REFRESH_API = 'http://fusion.qiniuapi.com/refresh';
 	/**
 	 * @var mixed
 	 */
-	public $config;
+	private $config;
+
+	private $filesystem;
 	/**
 	 * @var array
 	 */
@@ -118,14 +122,19 @@ class QiniuHelper extends Container {
 	 * 持久化操作
 	 * @param  string $key
 	 * @param  string or array $fops 若有多个操作，传入数组
-	 * @param string $pipline
+	 * @param string $pipeline
 	 * @param string $notify_url
 	 * @param boolean $force 是否覆盖已有相同文件，未知会产生什么变化
 	 * @return stirng PersistentFopId
 	 */
-	public function fop($key, $fops, $pipline = null, $force = false) {
+	public function fop($key, $fops, $saveAs = '', $pipeline = null, $force = false) {
+		if(!empty($saveAs)){
+			if(is_array($fops))
+				$fops = implode(';', $fops);
+			$fops .= '|saveas/'.$this->urlEncode($this->bucket.':'.$saveAs);
+		}
 
-		$fop = new PersistentFop($this['Auth'], $this->bucket, $pipline, $this->config['notify_url'], $force);
+		$fop = new PersistentFop($this['Auth'], $this->bucket, $pipeline, $this->config['notify_url'], $force);
 		return $this->response($fop->execute($key, $fops));
 	}
 
@@ -148,10 +157,10 @@ class QiniuHelper extends Container {
 	/**
 	 * @param $keys
 	 * @param $saveAs
-	 * @param $pipline
+	 * @param $pipeline
 	 * @return mixed
 	 */
-	public function zip($keys, $saveAs = '', $pipline = '') {
+	public function zip($keys, $saveAs = '', $pipeline = '') {
 		if (is_string($keys)) {
 			$keys = [$keys];
 		}
@@ -163,11 +172,8 @@ class QiniuHelper extends Container {
 		foreach ($keys as $key) {
 			$fops .= '/url/' . \Qiniu\base64_urlSafeEncode($key);
 		}
-		if (!empty($saveAs)) {
-			$fops .= '|saveas/' . \Qiniu\base64_urlSafeEncode($this->bucket . ":" . $saveAs);
-		}
 
-		return $this->fop($iniKey, $fops, $pipline, $this->config['notify_url']);
+		return $this->fop($iniKey, $fops, $saveAs, $pipeline);
 	}
 
 	/**
@@ -179,9 +185,11 @@ class QiniuHelper extends Container {
 	 * @return mixed
      * @link 
 	 */
-	public function putFile($filePath, $key = null, $params = null, $mime = 'application/octet-stream', $checkCrc = false) {
+	public function putFile($filePath, $key = null, $force = false, $params = null, $mime = 'application/octet-stream', $checkCrc = false) {
 		$key = $this->keyFilter($key);
-		return $this->run('UploadManager', 'putFile', [$this->uploadToken(), $key, $filename, $params, $mime, $checkCrc]);
+		if(!empty($key) && $force)
+			$this->forceUpload($key);
+		return $this->run('UploadManager', 'putFile', [$this->uploadToken(), $key, $filePath, $params, $mime, $checkCrc]);
 	}
 
 	/**
@@ -232,6 +240,15 @@ class QiniuHelper extends Container {
 		$this->cache = $cache;
 	}
 
+	public function config($name = '', $value = ''){
+		if(func_num_args() == 0)
+			return $this->config;
+		if(empty($value))
+			return isset($this->config[$name]) ? $this->config[$name] : null;
+		else
+			$this->config[$name] = $value;
+	}
+
 	/**
 	 * @return mixed
 	 */
@@ -257,9 +274,17 @@ class QiniuHelper extends Container {
 	 * @param $key
 	 * @return mixed
 	 */
-	public function put($string, $key = null) {
+	public function put($string, $key = null, $force = false) {
 		$key = $this->keyFilter($key);
-		return $this->run('UploadManager', 'put', [$this->uploadToken(), $key, $string]);
+		if(!empty($key) && $force){
+			$this->forceUpload($key);
+		}
+		return $this->run('UploadManager', 'put', [$this->uploadToken(), $key, $string]);	
+	}
+
+	private function forceUpload($key){
+		if($this->has($key))
+			$this->delete($key);
 	}
 
 	/**
@@ -392,6 +417,23 @@ class QiniuHelper extends Container {
 	}
 
 	/**
+	 * 批量复制
+	 * @return
+	 */
+	public function batchMove() {
+
+		$input = $this->batchCopyAndMoveParams(func_get_args());
+
+		$op = call_user_func_array(['\Qiniu\Storage\BucketManager', 'buildBatchMove'], $input);
+
+		if ($this->build) {
+			return $this->pushStack($op);
+		}
+
+		return $this->batch($op);
+	}
+
+	/**
 	 * 批量删除
 	 * @param  string or array $keys 可以删除目录
 	 * @return
@@ -413,16 +455,17 @@ class QiniuHelper extends Container {
 		return $this->batch($op);
 	}
 
+	private function getFilesystem(){
+		if(is_null($this->filesystem))
+			$this->filesystem = new Filesystem;
+		return $this->filesystem;
+	}
 	/**
 	 * 向上同步
 	 * @param  int $level 同步类型, 1(默认)增量，2覆盖，3清空
 	 * @return bool
 	 */
 	public function upSync($source, $prefix = '', $level = 1, $ignores = []) {
-
-		if (!$this->uploader instanceof UploadManager) {
-			throw new InvalidArgumentsException('You need an Uploader first which is instance of Cloudsthere\QiniuHelper\UploadManager');
-		}
 
 		set_time_limit(0);
 
@@ -431,11 +474,12 @@ class QiniuHelper extends Container {
 		}
 
 		$stat = [];
+		$filesys = $this->getFilesystem();
 
-		$local_files = filesystem()->allFiles($source);
+		$local_files = $filesys->allFiles($source);
 
 		$ignore_file = $source . '/.qiniuignore';
-		if (filesystem()->exists($ignore_file) && !empty($file_ignores = filesystem()->get($ignore_file))) {
+		if ($filesys->exists($ignore_file) && !empty($file_ignores = $filesys->get($ignore_file))) {
 
 			eval('$file_ignores = \'' . $file_ignores . '\';');
 
@@ -462,6 +506,7 @@ class QiniuHelper extends Container {
 		}
 
 		$local_keys = array_keys($local_files);
+
 
 		$bucket_keys = $this->listKeys($prefix);
 
@@ -494,12 +539,12 @@ class QiniuHelper extends Container {
 			// upload
 			if (!in_array($filename, $bucket_keys) || $level > 1) {
 
-				$res = $this->uploader->putFile($filename, $local_files[$key]->getRealPath());
+				$res = $this->putFile($local_files[$key]->getRealPath(), $filename);
 
 				if ($res) {
 					$stat['add'][] = $filename;
 				} else {
-					$stat['error'][] = $this->uploader->getError();
+					$stat['error'][] = $this->getError();
 				}
 
 			}
@@ -515,15 +560,13 @@ class QiniuHelper extends Container {
 	 */
 	public function downSync($dest, $prefix = '', $level = 1) {
 
-		if (!$this->uploader instanceof UploadManager) {
-			throw new InvalidArgumentsException('You need an Downloader first which is instance of Cloudsthere\QiniuHelper\DownloadManager');
-		}
 
 		set_time_limit(0);
 
 		$stat = [];
+		$filesys = $this->getFilesystem();
 
-		$local_files = (array) filesystem()->allFiles($dest);
+		$local_files = (array) $filesys->allFiles($dest);
 
 		if (!empty($local_files)) {
 
@@ -540,7 +583,7 @@ class QiniuHelper extends Container {
 		// 清空本地
 		if ($level == 3) {
 			$stat['delete'] = array_keys($local_files);
-			$res = filesystem()->deleteDirectory($dest, true);
+			$res = $filesys->deleteDirectory($dest, true);
 			if (!$res) {
 				throw new RuntimeException('Failed to clear directory ' . $dest);
 			}
@@ -551,7 +594,7 @@ class QiniuHelper extends Container {
 
 			if (array_key_exists($key, $local_files) && $level > 1) {
 
-				$res = filesystem()->delete($local_files[$key]->getRealPath());
+				$res = $filesys->delete($local_files[$key]->getRealPath());
 
 				if ($res) {
 					$stat['delete'][] = $key;
@@ -563,10 +606,9 @@ class QiniuHelper extends Container {
 
 			// download
 			if (!array_key_exists($key, $local_files) || $level > 1) {
+				$filename = realpath($dest) . '/' . substr_replace($key, '', 0, strlen($prefix));
 
-				$filename = realpath($dest) . '/' . $key;
-
-				$res = $this->downloader->download($key, $filename);
+				$res = $this->download($key, $filename);
 
 				if ($res) {
 					$stat['add'][] = $key;
@@ -578,6 +620,18 @@ class QiniuHelper extends Container {
 		}
 
 		return $stat;
+	}
+
+	private function download($key, $filename){
+		$url = $this->key_to_url($key);
+		$content = file_get_contents($url);
+
+		$filesys = $this->getFilesystem();
+		$dirname = dirname($filename);
+		if(!$filesys->isDirectory($dirname))
+			$filesys->makeDirectory($dirname);
+		
+		return $filesys->put($filename, $content);
 	}
 
 	/**
@@ -603,17 +657,17 @@ class QiniuHelper extends Container {
 			'dirs' => $dirs,
 		];
 
-		$authorization = $this->auth->signRequest(self::REFRESH_API, null);
+		$authorization = $this['Auth']->signRequest(self::REFRESH_API, null);
 		$headers = [
 			'Authorization' => 'QBox ' . $authorization,
 			'Content-Type' => 'application/json',
 		];
 
-		$ret = Client::post(self::REFRESH_API, json_encode($data), $headers);
+		$ret = \Qiniu\Http\Client::post(self::REFRESH_API, json_encode($data), $headers);
 
 		if (!$ret->ok()) {
 
-			$retArr = array(null, new Error(self::REFRESH_API, $ret));
+			$retArr = array(null, new \Qiniu\Http\Error(self::REFRESH_API, $ret));
 
 		} else {
 
@@ -622,7 +676,7 @@ class QiniuHelper extends Container {
 				$retArr = array($r, null);
 			} else {
 				$ret->error = $ret->json()['error'];
-				$retArr = array(null, new Error(self::REFRESH_API, $ret));
+				$retArr = array(null, new \Qiniu\Http\Error(self::REFRESH_API, $ret));
 			}
 		}
 
