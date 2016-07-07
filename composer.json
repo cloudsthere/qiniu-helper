@@ -8,11 +8,18 @@
     ],
     "license": "MIT",
     "require": {
-        "qiniu/php-sdk": "^7.0"
+        "qiniu/php-sdk": "^7.0",
+        "illuminate/filesystem": "^5.2"
     },
     "autoload":{
         "psr-4":{
             "QiniuHelper\\" :"src/"
+        }
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
         }
     }
 }
