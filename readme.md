@@ -223,4 +223,7 @@ $qiniu->getError(); // 返回Qiniu\Http\Error的实例
 
 // 更换缓存驱动，$cache必须是Doctrine\Common\Cache\Cache的实现
 $qiniu->setCache(Cache $cache);
+
+// 获取、修改配置。不传参，返回整个配置数组。
+$qiniu->config($name = '', $value = '');
 ```
