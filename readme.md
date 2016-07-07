@@ -56,7 +56,7 @@ $qiniu = new \QiniuHelper\QiniuHelper($config) // 相应配置
 	* key 在七牛空间中的文件名，如`style.css, js/common.js`, keys表示数组，也可以传字符串，会被自动转为数组
 	* prefix 前缀，如`images/`
 	* saveAs 生成的新文件名
-	* pipline 多媒体处理管道
+	* pipeline 多媒体处理管道
 
 ### 上传操作
 ```
@@ -168,13 +168,13 @@ $qiniu->downSync($dest, $prefix = '', $level = 1)
 
 ```
 // $key, 将要操作的资源；$fops，stirng|array, 将要进行的操作;$force, 是否覆盖已有相同文件
-$qiniu->fop($key, $fops, $pipline = null, $force = false);
+$qiniu->fop($key, $fops, $pipeline = null, $force = false);
 
 // 查询, $id, fop方法返回的id
 $qiniu->fopStatus($id); 
 
 // 生成压缩包
-$qiniu->zip($keys, $saveAs = '', $pipline = null);
+$qiniu->zip($keys, $saveAs = '', $pipeline = null);
 
 ```
 
