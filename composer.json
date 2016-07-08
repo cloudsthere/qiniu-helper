@@ -9,9 +9,9 @@
     "license": "MIT",
     "require": {
         "qiniu/php-sdk": "^7.0",
-        "illuminate/filesystem": "^5.2",
         "pimple/pimple": "^3.0",
-        "doctrine/common": "^2.6"
+        "doctrine/common": "^2.6",
+        "illuminate/filesystem": "^5.2"
     },
     "autoload":{
         "psr-4":{

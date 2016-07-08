@@ -4,7 +4,7 @@ namespace QiniuHelper;
 
 use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\FilesystemCache;
-use Illuminate\Filesystem\Filesystem;
+use Illuminate\Flysystem\Filesystem;
 use Pimple\Container;
 use Qiniu\Processing\PersistentFop;
 use QiniuHelper\Exceptions\InvalidArgumentException;
@@ -481,7 +481,7 @@ class QiniuHelper extends Container {
 		$stat = [];
 		$filesys = $this->getFilesystem();
 
-		if($filesys->isDirectory($source))
+		if(is_dir($source))
 			$local_files = $filesys->allFiles($source);
 		else
 			throw new InvalidArgumentException($source . ' is not a directory');
