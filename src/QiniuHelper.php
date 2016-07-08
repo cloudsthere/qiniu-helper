@@ -4,7 +4,7 @@ namespace QiniuHelper;
 
 use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\FilesystemCache;
-use Illuminate\Flysystem\Filesystem;
+use Illuminate\Filesystem\Filesystem;
 use Pimple\Container;
 use Qiniu\Processing\PersistentFop;
 use QiniuHelper\Exceptions\InvalidArgumentException;
