@@ -2,40 +2,37 @@
 
 namespace QiniuHelper;
 
-use Qiniu\Auth as QiniuAuth;
+
 
 class Callback
 {
-    const API = 'http://172.30.251.210/callback.php';
+
     private $auth;
     private $contentType; 
     private $body;
     private $authorization;
+    private $callback_url;
 
-    function __construct(QiniuAuth $auth){
-        $this->auth = $auth;
+    function __construct($helper){
+        $this->auth = $helper['Auth'];
+        $this->callback_url = $helper->config('notify_url');
         $this->body = file_get_contents('php://input');
+        $headers = apache_request_headers();
 
-        if(isset($_SERVER['HTTP_AUTHORIZATION']))
-            $this->authorization = $_SERVER['HTTP_AUTHORIZATION'];
+        if(isset($headers['Authorization']))
+            $this->authorization = $headers['Authorization'];
 
-        if(isset($_SERVER['CONTENT_TYPE']))
-            $this->contentType = $_SERVER['CONTENT_TYPE'];
+        if(isset($headers['Content-Type']))
+            $this->contentType = $headers['Content-Type'];
 
     }
 
     public function verify(){
-        if(empty($this->authorization))
+        if(empty($this->authorization)){
             return null;
-
-        $isQiniuCallback = $this->auth->verifyCallback($this->contentType, $this->authorization, self::API, $this->body);
-
-        if ($isQiniuCallback) {
-            $resp = array('ret' => 'success');
-        } else {
-            $resp = array('ret' => 'failed');
         }
-        echo json_encode($resp);
+
+        $isQiniuCallback = $this->auth->verifyCallback($this->contentType, $this->authorization, $this->callback_url, $this->body);
 
         return $isQiniuCallback;
     }

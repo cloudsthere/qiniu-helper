@@ -187,7 +187,11 @@ class QiniuHelper extends Container {
      * @link 
 	 */
 	public function putFile($filePath, $key = null, $force = false, $params = null, $mime = 'application/octet-stream', $checkCrc = false) {
+		if(!is_file($filePath))
+			throw new InvalidArgumentException($filePath. ' is not a file');
+
 		$key = $this->keyFilter($key);
+
 		if(!empty($key) && $force)
 			$this->forceUpload($key);
 		return $this->run('UploadManager', 'putFile', [$this->uploadToken(), $key, $filePath, $params, $mime, $checkCrc]);
@@ -255,7 +259,7 @@ class QiniuHelper extends Container {
 	 */
 	public function callback() {
 		if (empty($this->callback)) {
-			$this->callback = new Callback($this['Auth']);
+			$this->callback = new Callback($this);
 		}
 
 		return $this->callback;

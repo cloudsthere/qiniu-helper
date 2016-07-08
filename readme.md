@@ -80,11 +80,11 @@ $qiniu = new \QiniuHelper\QiniuHelper($config) // 相应配置
 
 ### 上传操作
 ```
-// 上传字符串
-$qiniu->put($string, $key = null); // 不传$key或$key为空，七牛将随机生成文件名，下同
+// 上传字符串. $force,是否覆盖同名文件
+$qiniu->put($string, $key = null, $force = false); // 不传$key或$key为空，七牛将随机生成文件名，下同
 
 // 上传文件
-$qiniu->putFile($filePath, $key = null, $params = null, $mime = 'application/octet-stream', $checkCrc = false); 
+$qiniu->putFile($filePath, $key = null, $force = false, $params = null, $mime = 'application/octet-stream', $checkCrc = false); 
 
 // 获取uploadToken, 前端上传可能用到
 $qiniu->uploadToken($forceRefresh = false); // token会有3600秒缓存，可以令其强制刷新
