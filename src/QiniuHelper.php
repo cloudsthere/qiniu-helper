@@ -6,8 +6,9 @@ use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\FilesystemCache;
 use Illuminate\Filesystem\Filesystem;
 use Pimple\Container;
-use Qiniu\Processing\PersistentFop;
 use QiniuHelper\Exceptions\InvalidArgumentException;
+use QiniuHelper\Exceptions\RuntimeException;
+use Qiniu\Processing\PersistentFop;
 
 class QiniuHelper extends Container {
 	const CACHE_EXPIRE = 3600;
