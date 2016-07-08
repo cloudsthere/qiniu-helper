@@ -168,8 +168,8 @@ $qiniu->upSync($source, $prefix = '', $level = 1, $ignores = [])
 // 向下同步
 $qiniu->downSync($dest, $prefix = '', $level = 1)
 ```
-* `$source`和`$dest`均指本地目录
-* `$level`,同步程度。1（默认),只新增文件，不删除，不覆盖； 2，相同文件名将覆盖，同时新增；3，清空目标目录，再传输。
+*  `$source`和`$dest`均指本地目录
+* `$level`,同步程度。1（默认),只新增文件，不删除，不覆盖； 2，相同文件名将覆盖，同时新增；3，清空目标目录，再传输文件。
 * `$ignores`, 忽略规则，只对向上同步生效。有另一种使忽略规则生效的方法，可以在当前操作目录下创建带有忽略规则的文件.qiniuignore。
 * .qiniuignore采用一维json数组格式，如下
 
