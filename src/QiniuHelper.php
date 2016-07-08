@@ -7,6 +7,7 @@ use Doctrine\Common\Cache\FilesystemCache;
 use Illuminate\Filesystem\Filesystem;
 use Pimple\Container;
 use Qiniu\Processing\PersistentFop;
+use QiniuHelper\Exceptions\InvalidArgumentException;
 
 class QiniuHelper extends Container {
 	const CACHE_EXPIRE = 3600;
@@ -76,7 +77,7 @@ class QiniuHelper extends Container {
 
 		$buckets = $this->config['bucket'];
 		if (!array_key_exists($bucket, $buckets) && empty($domain)) {
-			throw new InvalidArgumentsException('If bucket is undefined, parameter 2 (domain) is expected');
+			throw new InvalidArgumentException('If bucket is undefined, parameter 2 (domain) is expected');
 		}
 
 		if (!empty($domain)) {
@@ -476,7 +477,10 @@ class QiniuHelper extends Container {
 		$stat = [];
 		$filesys = $this->getFilesystem();
 
-		$local_files = $filesys->allFiles($source);
+		if($filesys->isDirectory($source))
+			$local_files = $filesys->allFiles($source);
+		else
+			throw new InvalidArgumentException($source . ' is not a directory');
 
 		$ignore_file = $source . '/.qiniuignore';
 		if ($filesys->exists($ignore_file) && !empty($file_ignores = $filesys->get($ignore_file))) {
@@ -488,7 +492,7 @@ class QiniuHelper extends Container {
 				$file_ignores = json_decode($file_ignores, true);
 
 				if (!$file_ignores) {
-					throw new InvalidArgumentsException('Invalid json in .qiniuignore');
+					throw new InvalidArgumentException('Invalid json in .qiniuignore');
 				}
 
 				$ignores = array_merge($ignores, $file_ignores);
@@ -702,7 +706,7 @@ class QiniuHelper extends Container {
 		} elseif ($num == 3) {
 			return $input;
 		} else {
-			throw new InvalidArgumentsException(sprintf('This method expects 1 or 3 parameters, %s given', is_null($num) ? 'null' : $num));
+			throw new InvalidArgumentException(sprintf('This method expects 1 or 3 parameters, %s given', is_null($num) ? 'null' : $num));
 		}
 
 	}
@@ -798,7 +802,7 @@ class QiniuHelper extends Container {
 		} elseif ($num == 4) {
 			return $input;
 		} else {
-			throw new InvalidArgumentsException(sprintf('This method expects 2 or 4 parameters, %s given', is_null($num) ? 'null' : $num));
+			throw new InvalidArgumentException(sprintf('This method expects 2 or 4 parameters, %s given', is_null($num) ? 'null' : $num));
 		}
 
 	}
