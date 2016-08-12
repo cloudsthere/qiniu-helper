@@ -9,7 +9,7 @@
 ## 安装
 
 ```
-composer require "cloudthere/qiniu-helper"
+composer require "cloudsthere/qiniu-helper"
 ```
 
 ## 配置
